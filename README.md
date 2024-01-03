@@ -1,5 +1,3 @@
-Certainly! Below is a template for a README file that you can use for your GitHub repository. You can customize it based on the specifics of your project.
-
 ```markdown
 # Rekordbox Playlist Structure Generator
 
