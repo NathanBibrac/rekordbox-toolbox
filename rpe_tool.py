@@ -8,6 +8,25 @@ import shutil
 from datetime import datetime
 import re
 
+'''
+    Inputs : 
+        - XML file
+        - Target directory
+        - Mode (excel or exec)
+    Outputs :
+        - Excel file with the playlist structure
+        - Playlist structure in the target directory
+    Steps :
+        - Parse XML
+        - Get playlist list from XML
+        - Map tracks to playlists
+        - Get tracks from XML
+        - Merge tracks and playlists
+        - Copy tracks
+
+'''
+
+
 def ts_str():
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 def ts_log():
@@ -62,7 +81,7 @@ def get_track_list(playlist):
     return track_list
 
 
-def map_track__to_playlist(playlist_list = playlist_list_xml, target_dir="D:\\Music\\rekordbox"):
+def map_track_to_playlist(playlist_list, target_dir="D:\\Music\\rekordbox"):
     full_playlist_list = []
     playlist_dict = {}
     for elt in playlist_list:
@@ -104,7 +123,7 @@ def merge_tracks_and_playlists(tracks, playlists,mode="excel"):
     df_tracks_in_playlists = pd.merge(tracks, playlists, on='TrackID', how='inner')
     df_tracks_in_playlists["Target_Path"] = df_tracks_in_playlists["Path"] +"\\" + df_tracks_in_playlists["Location"].str.split("\\").str[-1]
     if mode == "excel":
-        init_output_dir()
+        # init_output_dir()
         filename= f"playlist_structure_{ts_str()}.xlsx"
         filedir = os.path.join("output",filename)
         df_tracks_in_playlists.to_excel(filedir)
@@ -112,10 +131,10 @@ def merge_tracks_and_playlists(tracks, playlists,mode="excel"):
     return df_tracks_in_playlists
 
 def create_structure(target_path_column):
-    for row in target_path_column.iterrows():
-        if not os.path.exists(os.path.dirname(target_path_column)):
-            os.makedirs(os.path.rootname(row["Target_Path"]))
-            print(f'Path: {os.path.dirname(row["Target_Path"])} created')
+    for elt in target_path_column.tolist():
+        if not os.path.exists(os.path.dirname(elt)):
+            os.makedirs(os.path.dirname(elt))
+            print(f'Path: {os.path.dirname(elt)} created')
 
 def copie_tracks(merged_df,mode = "test"):
     for index, row in merged_df.iterrows():
@@ -126,10 +145,16 @@ def copie_tracks(merged_df,mode = "test"):
             print(f'Track {row["Name"]} already exists in {row["Target_Path"]}')
         else:
                 if mode == "test" or mode == "excel":
-                    print(f'{ts_log()}: Copied from '+Fore.RED+f'{row["Location"]}'+Style.RESET_ALL +'\nTo '+Fore.RED+f'{row["Target_Path"]}'+Style.RESET_ALL)
+                    print(f'{ts_log()}: Copied from {row["Location"]}\nTo {row["Target_Path"]}'+Style.RESET_ALL)
                 else:
-                    shutil.copy(row["Location"], row["Target_Path"])
+                    try:
+                        shutil.copy(row["Location"], row["Target_Path"])
+                    except:
+                        print(f'{ts_log()}: Error while copying from '+Fore.RED+f'{row["Location"]}'+Style.RESET_ALL +'\nTo '+Fore.RED+f'{row["Target_Path"]}'+Style.RESET_ALL)
 
+def init_output_dir(output_dir="output"):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
 def main():
 
@@ -169,7 +194,11 @@ def main():
     
     root = parse_xml(XML)                                                                         #Parse XML
     playlist_list_xml = get_playlist_list(root)                                                   #Get playlist list
-    result_playlist_df = map_track__to_playlist(playlist_list_xml,target_dir)                     #Map tracks to playlists
+    result_playlist_df = map_track_to_playlist(playlist_list_xml,target_dir)                     #Map tracks to playlists
     track_df = get_tracks(XML)                                                                    #Get tracks
     merged_df = merge_tracks_and_playlists(track_df,result_playlist_df).drop_duplicates()         #Merge tracks and playlists
+    create_structure(merged_df["Target_Path"])
     copie_tracks(merged_df,mode)                                                                  #Copy tracks
+
+if __name__ == "__main__":
+    main()
