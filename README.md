@@ -43,5 +43,5 @@
         python rpe_tool.py /path/to/xml_file.xml /path/to/target_directory exec
         ```
 
-    ## License
-    This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+    ## A juste titre.
+    ## __XNIHILO__
